@@ -8,6 +8,8 @@ import (
 	"log"
 
 	"github.com/numaproj/numaflow-go/pkg/sourcer"
+
+	"numaflow-nats-source/impl"
 )
 
 func main() {
@@ -19,7 +21,7 @@ func main() {
 	var prefixStr string
 	flag.StringVar(&prefixStr, "prefix", "test-payload-", "Prefix of the payload")
 	flag.Parse()
-	simpleSource := NewSimpleSource(prefixStr)
+	simpleSource := impl.NewSimpleSource(prefixStr)
 	err := sourcer.NewServer(simpleSource).Start(context.Background())
 	if err != nil {
 		log.Panic("Failed to start source server : ", err)
