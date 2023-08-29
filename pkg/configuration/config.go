@@ -2,14 +2,12 @@ package configuration
 
 import (
 	"encoding/json"
-
-	corev1 "k8s.io/api/core/v1"
 )
 
 type Auth struct {
 	// Token auth
 	// +optional
-	Token *corev1.SecretKeySelector `json:"token,omitempty" protobuf:"bytes,1,opt,name=token"`
+	Token string `json:"token,omitempty" protobuf:"bytes,1,opt,name=token"`
 	// TODO - NKey auth
 	// TODO - Basic auth which contains a user name and a password
 }
