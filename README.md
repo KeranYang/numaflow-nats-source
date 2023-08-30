@@ -2,44 +2,78 @@
 A simple example of a Nats source.
 
 ## Use it in numaflow e2e tests
+This example demonstrates how to use a Nats source in numaflow e2e tests.
 
-### Step 1: Deploy Nats app to your cluster
+### Step 1: Deploy Nats app to your cluster under numaflow-system namespace
 Go to Numaflow workspace, under `numaflow/test/nats-e2e` folder, run:
 ```bash
 kubectl -n numaflow-system delete statefulset nats --ignore-not-found=true
 kubectl apply -k ../../config/apps/nats -n numaflow-system
 ```
-This will start a Nats server in your cluster under numaflow-system namespace.
+It will start a Nats server.
 
-### Step 2: Prepare the Nats source config
+### Step 2: Prepare the Nats source configuration
+A Nats configuration specifies information required to connect to a Nats server.
+The configuration is stored in a ConfigMap, which is mounted to the Nats source pod as a volume.
+The following example demonstrates how to configure a Nats source to connect to a Nats server with authentication token.
 
-#### Option One: hard code authentication tokens
-* Use the `main` branch of this repo to build the Nats source image.
-* Go to `numaflow/test/nats-e2e/testdata` folder
-** Create a file named `nats-source-config.yaml` with the following content:
+Go to `numaflow/test/nats-e2e/testdata` folder
+
+1. Create the authentication token secret, create a file named `nats-auth-fake-token` with the following content:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nats-source-fake-token
+stringData:
+  fake-token: "testingtoken"
+```
+Note:
+The secret token value is the same as the one
+we declared in our Nats app deployment file `numaflow/config/apps/nats/nats.yaml`,
+such that the e2e test can connect to the Nats server.
+
+1. Create the ConfigMap, create a file named `nats-source-config.yaml` with the following content:
 ```yaml
 apiVersion: v1
 data:
-  nats-config.json: "{\n\t\"url\": \"nats\",\n\t\"subject\": \"test-subject\",\n\t\"queue\":
-    \"my-queue\",\n\t\"auth\": {\n\t\t\"token\": \"testingtoken\"\n\t}\n}\n"
+  nats-config.json: |
+    {
+         "url":"nats",
+         "subject":"test-subject",
+         "queue":"my-queue",
+         "auth":{
+            "token":{
+               "name":"nats-auth-fake-token",
+               "key":"fake-token"
+            }
+         }
+      }
 kind: ConfigMap
 metadata:
   name: nats-config-map
 ```
-* This will create a ConfigMap named `nats-config-map` with a file named `nats-config.json` in it.
-* The `nats-config.json` file contains the Nats source configuration.
-* The `token` field is the authentication token for Nats server.
-* Deploy the ConfigMap to your cluster:
+
+1. Deploy the secret and ConfigMap to your cluster under numaflow-system namespace:
 ```bash
+kubectl apply -f testdata/nats-auth-fake-token.yaml -n numaflow-system
 kubectl apply -f testdata/nats-source-config.yaml -n numaflow-system
 ```
 
-#### Option Two: use secret to store authentication tokens
-* Use the `use-secret` branch of this repo to build the Nats source image.
+Up until now, we have a running Nats server, and a ConfigMap that contains the Nats source configuration.
+We also have a secret that contains the authentication token for the Nats server.
+Time to specify the pipeline.
 
 ### Step 3: Specify the pipeline
+* Build the Nats source image, push it to a public registry, and use it as the user-defined source image.
+
+With in this repo, run the following commands:
+```bash
+make image
+docker push quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.0 
+```
 * Mount the ConfigMap to the Nats source pod as a volume.
-* Use the image built in Step 1 as the user-defined source image.
+
 ```yaml
 apiVersion: numaflow.numaproj.io/v1alpha1
 kind: Pipeline
@@ -51,22 +85,21 @@ spec:
       scale:
         min: 2
       volumes:
-        - name: my-file-config
+        - name: my-config-mount
           configMap:
             name: nats-config-map
+        - name: my-secret-mount
+          secret:
+            secretName: nats-auth-fake-token
       source:
         udsource:
           container:
-            env:
-              - name: abc
-                value: |
-                  {"a": "b", "c": "d"}
-            # A simple user-defined source for e2e testing
-            # See https://github.com/numaproj/numaflow-go/tree/main/pkg/sourcer/examples/simple_source
-            image: quay.io/numaio/numaflow-go/source-simple-source:v0.5.9
+            image: quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.1
             volumeMounts:
-              - name: my-file-config
+              - name: my-config-mount
                 mountPath: /etc/config
+              - name: my-secret-mount
+                mountPath: /etc/secrets/nats-auth-fake-token
     - name: p1
       udf:
         builtin:

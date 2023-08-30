@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"numaflow-nats-source/pkg/configuration"
+	"numaflow-nats-source/pkg/utils"
 )
 
 type Message struct {
@@ -65,8 +66,12 @@ func New(c *configuration.Config, opts ...Option) (*natsSource, error) {
 		}),
 	}
 
-	if c.Auth != nil && c.Auth.Token != "" {
-		opt = append(opt, natslib.Token(c.Auth.Token))
+	if c.Auth != nil && c.Auth.Token != nil {
+		token, err := utils.GetSecretFromVolume(c.Auth.Token)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get auth token, %w", err)
+		}
+		opt = append(opt, natslib.Token(token))
 	}
 
 	n.logger.Info("Connecting to nats service...")
