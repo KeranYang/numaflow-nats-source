@@ -10,7 +10,7 @@ import (
 	sourcesdk "github.com/numaproj/numaflow-go/pkg/sourcer"
 	"go.uber.org/zap"
 
-	"numaflow-nats-source/pkg/configuration"
+	"numaflow-nats-source/pkg/config"
 	"numaflow-nats-source/pkg/utils"
 )
 
@@ -40,8 +40,9 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
-func New(c *configuration.Config, opts ...Option) (*natsSource, error) {
+func New(c *config.Config, opts ...Option) (*natsSource, error) {
 	n := &natsSource{
+		// TODO: make this configurable by the user
 		bufferSize: 1000, // default size
 	}
 	for _, o := range opts {
@@ -66,12 +67,43 @@ func New(c *configuration.Config, opts ...Option) (*natsSource, error) {
 		}),
 	}
 
-	if c.Auth != nil && c.Auth.Token != nil {
-		token, err := utils.GetSecretFromVolume(c.Auth.Token)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get auth token, %w", err)
+	if c.TLS != nil {
+		if c, err := utils.GetTLSConfig(c.TLS); err != nil {
+			return nil, err
+		} else {
+			opt = append(opt, natslib.Secure(c))
 		}
-		opt = append(opt, natslib.Token(token))
+	}
+
+	if c.Auth != nil {
+		switch {
+		case c.Auth.Basic != nil && c.Auth.Basic.User != nil && c.Auth.Basic.Password != nil:
+			username, err := utils.GetSecretFromVolume(c.Auth.Basic.User)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get basic auth user, %w", err)
+			}
+			password, err := utils.GetSecretFromVolume(c.Auth.Basic.Password)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get basic auth password, %w", err)
+			}
+			opt = append(opt, natslib.UserInfo(username, password))
+		case c.Auth.Token != nil:
+			token, err := utils.GetSecretFromVolume(c.Auth.Token)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get auth token, %w", err)
+			}
+			opt = append(opt, natslib.Token(token))
+		case c.Auth.NKey != nil:
+			nKeyFile, err := utils.GetSecretVolumePath(c.Auth.NKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get configured nkey file, %w", err)
+			}
+			o, err := natslib.NkeyOptionFromSeed(nKeyFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get NKey, %w", err)
+			}
+			opt = append(opt, o)
+		}
 	}
 
 	n.logger.Info("Connecting to nats service...")

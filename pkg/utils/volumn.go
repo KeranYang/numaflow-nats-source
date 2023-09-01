@@ -9,7 +9,7 @@ import (
 )
 
 // GetSecretFromVolume retrieves the value of mounted secret volume
-// "/var/numaflow/secrets/${secretRef.name}/${secretRef.key}" is expected to be the file path
+// "/etc/secrets/${secretRef.name}/${secretRef.key}" is expected to be the file path
 func GetSecretFromVolume(selector *corev1.SecretKeySelector) (string, error) {
 	filePath, err := GetSecretVolumePath(selector)
 	if err != nil {
@@ -20,7 +20,7 @@ func GetSecretFromVolume(selector *corev1.SecretKeySelector) (string, error) {
 		return "", fmt.Errorf("failed to get secret value of name: %s, key: %s, %w", selector.Name, selector.Key, err)
 	}
 	// Secrets edited by tools like "vim" always have an extra invisible "\n" in the end,
-	// and it's often neglected, but it makes differences for some of the applications.
+	// and it's often neglected, but it makes differences for some applications.
 	return strings.TrimSuffix(string(data), "\n"), nil
 }
 

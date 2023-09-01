@@ -7,7 +7,7 @@ import (
 
 	"github.com/numaproj/numaflow-go/pkg/sourcer"
 
-	"numaflow-nats-source/pkg/configuration"
+	"numaflow-nats-source/pkg/config"
 	"numaflow-nats-source/pkg/nats"
 )
 
@@ -27,15 +27,14 @@ func main() {
 	if err != nil {
 		log.Panic("Failed to start source server : ", err)
 	}
-	// TODO - Close nats connection when the server is stopped
 }
 
-func getConfigFromFile(filePath string) (*configuration.Config, error) {
+func getConfigFromFile(filePath string) (*config.Config, error) {
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	c := &configuration.Config{}
+	c := &config.Config{}
 	if err = c.Parse(string(content)); err != nil {
 		return nil, err
 	} else {

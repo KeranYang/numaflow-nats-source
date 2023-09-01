@@ -24,7 +24,7 @@ Go to `numaflow/test/nats-e2e/testdata` folder
 apiVersion: v1
 kind: Secret
 metadata:
-  name: nats-source-fake-token
+  name: nats-auth-fake-token
 stringData:
   fake-token: "testingtoken"
 ```
@@ -70,7 +70,7 @@ Time to specify the pipeline.
 With in this repo, run the following commands:
 ```bash
 make image
-docker push quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.0 
+docker push quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.2
 ```
 * Mount the ConfigMap to the Nats source pod as a volume.
 
@@ -94,7 +94,7 @@ spec:
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.1
+            image: quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.2
             volumeMounts:
               - name: my-config-mount
                 mountPath: /etc/config
