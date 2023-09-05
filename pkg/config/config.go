@@ -1,8 +1,6 @@
 package config
 
 import (
-	"encoding/json"
-
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -63,18 +61,4 @@ type Auth struct {
 	// NKey auth
 	// +optional
 	NKey *corev1.SecretKeySelector `json:"nkey,omitempty" protobuf:"bytes,3,opt,name=nkey"`
-}
-
-// String returns the string representation of the Config.
-func (c *Config) String() string {
-	b, err := json.Marshal(c)
-	if err != nil {
-		return err.Error()
-	}
-	return string(b)
-}
-
-// Parse takes a JSON string and parses it to a Config object
-func (c *Config) Parse(s string) error {
-	return json.Unmarshal([]byte(s), c)
 }

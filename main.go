@@ -30,14 +30,10 @@ func main() {
 }
 
 func getConfigFromFile(filePath string) (*config.Config, error) {
+	parser := &config.JSONConfigParser{}
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	c := &config.Config{}
-	if err = c.Parse(string(content)); err != nil {
-		return nil, err
-	} else {
-		return c, nil
-	}
+	return parser.Parse(string(content))
 }
