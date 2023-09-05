@@ -1,0 +1,37 @@
+apiVersion: numaflow.numaproj.io/v1alpha1
+kind: Pipeline
+metadata:
+  name: nats-source-e2e
+spec:
+  vertices:
+    - name: in
+      scale:
+        min: 2
+      volumes:
+        - name: my-config-mount
+          configMap:
+            name: nats-config-map
+        - name: my-secret-mount
+          secret:
+            secretName: nats-auth-fake-token
+      source:
+        udsource:
+          container:
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.0
+            volumeMounts:
+              - name: my-config-mount
+                mountPath: /etc/config
+              - name: my-secret-mount
+                mountPath: /etc/secrets/nats-auth-fake-token
+    - name: p1
+      udf:
+        builtin:
+          name: cat
+    - name: out
+      sink:
+        log: {}
+  edges:
+    - from: in
+      to: p1
+    - from: p1
+      to: out

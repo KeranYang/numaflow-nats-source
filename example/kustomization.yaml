@@ -1,0 +1,5 @@
+resources:
+  - nats.yaml
+  - auth-token.yaml
+  - config.yaml
+  - test-pipeline.yaml

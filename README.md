@@ -1,39 +1,74 @@
 # Nats Source
-A simple example of a Nats source.
+Nats Source is a [Numaflow](https://numaflow.numaproj.io/) user-defined source that reads messages from a Nats server.
 
-## Use it in numaflow e2e tests
-This example demonstrates how to use a Nats source in numaflow e2e tests.
+## Quick Start
+Following is a quick start guide to run a Nats source in a Numaflow pipeline hosted on your local kube cluster.
+The pipeline reads messages from a Nats server, and writes them to a log sink.
 
-### Step 1: Deploy Nats app to your cluster under numaflow-system namespace
-Go to Numaflow workspace, under `numaflow/test/nats-e2e` folder, run:
+### Pre-requisites
+* Follow the [Numaflow quick start guide](https://numaflow.numaproj.io/docs/quickstart) to install Numaflow on your local kube cluster.
+* Follow [natscli](https://github.com/nats-io/natscli) to install THE Nats Command Line Interface (CLI) tool.
+
+### Step 1: Deploy a Nats server, and a Numaflow pipeline
+Under the current folder, run the following command
 ```bash
-kubectl -n numaflow-system delete statefulset nats --ignore-not-found=true
-kubectl apply -k ../../config/apps/nats -n numaflow-system
+kubectl apply -k ./example
 ```
-It will start a Nats server.
 
-### Step 2: Prepare the Nats source configuration
-A Nats configuration specifies information required to connect to a Nats server.
-The configuration is stored in a ConfigMap, which is mounted to the Nats source pod as a volume.
-The following example demonstrates how to configure a Nats source to connect to a Nats server with authentication token.
-
-Go to `numaflow/test/nats-e2e/testdata` folder
-
-1. Create the authentication token secret, create a file named `nats-auth-fake-token` with the following content:
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: nats-auth-fake-token
-stringData:
-  fake-token: "testingtoken"
+### Step 2: Verify the pipeline
+Run the following command to verify the pipeline is up and running:
+```bash
+kubectl get pipeline nats-source-e2e
 ```
-Note:
-The secret token value is the same as the one
-we declared in our Nats app deployment file `numaflow/config/apps/nats/nats.yaml`,
-such that the e2e test can connect to the Nats server.
+The output should be similar to:
+```
+NAME              PHASE     MESSAGE   VERTICES   AGE
+nats-source-e2e   Running             3          1m
+```
 
-1. Create the ConfigMap, create a file named `nats-source-config.yaml` with the following content:
+### Step 3: Send messages to the Nats server
+Run the following command to port-forward the Nats server to your local machine:
+```bash
+kubectl port-forward svc/nats 4222:4222
+```
+Run the following command to send messages to the Nats server:
+```bash
+nats pub test-subject "Hello World" --user=testingtoken
+```
+
+### Step 4: Verify the log printed by the log sink
+Run the command below and remember to replace "xxxxx" with the appropriate out vertex pod name.
+```bash
+kubectl logs nats-source-e2e-out-0-xxxxx
+```
+The output should be similar to:
+```
+2023/09/05 19:18:44 (out)  Payload -  Hello World  Keys -  []  EventTime -  1693941455870
+```
+
+### Step 5: Clean up
+Run the following command to delete the Numaflow pipeline and the Nats server:
+```bash
+kubectl delete -k ./example
+```
+
+Hurray!
+We have successfully run a Nats source in a Numaflow pipeline.
+Now let's dive into the details of how to use the Nats source in our own Numaflow pipeline.
+
+## How to use the Nats source in our own Numaflow pipeline
+
+### Step 1: Deploy our own Nats server
+Deploy our own Nats server to our cluster. There are multiple ways to do this.
+E.g., follow the [NATS Docs](https://docs.nats.io/running-a-nats-service/introduction)
+
+### Step 2: Create a ConfigMap that contains the Nats source configuration
+With a running Nats server, we need to specify how to connect to the Nats server.
+We need a **Nats source configuration**.
+Numaflow Nats Source requires us to specify the Nats source configuration in a ConfigMap,
+and mount it to the Nats source pod as a volume.
+The following example demonstrates how to create a ConfigMap that contains the Nats source configuration in JSON format.
+
 ```yaml
 apiVersion: v1
 data:
@@ -54,25 +89,18 @@ metadata:
   name: nats-config-map
 ```
 
-1. Deploy the secret and ConfigMap to your cluster under numaflow-system namespace:
-```bash
-kubectl apply -f testdata/nats-auth-fake-token.yaml -n numaflow-system
-kubectl apply -f testdata/nats-source-config.yaml -n numaflow-system
-```
+The configuration contains the following fields:
+* `url`: The Nats server URL.
+* `subject`: The Nats subject to subscribe to.
+* `queue`: The Nats queue group name.
+* `auth`: The Nats authentication information.
+  * `token`: The Nats authentication token information.
+    * `name`: The name of the secret that contains the authentication token.
+    * `key`: The key of the authentication token in the secret.
 
-Up until now, we have a running Nats server, and a ConfigMap that contains the Nats source configuration.
-We also have a secret that contains the authentication token for the Nats server.
-Time to specify the pipeline.
-
-### Step 3: Specify the pipeline
-* Build the Nats source image, push it to a public registry, and use it as the user-defined source image.
-
-With in this repo, run the following commands:
-```bash
-make image
-docker push quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.2
-```
-* Mount the ConfigMap to the Nats source pod as a volume.
+### Step 3: Specify the Nats source in the pipeline
+With the Nats source configuration, we can specify the Nats source in the pipeline.
+The following example demonstrates how to specify the Nats source in the pipeline.
 
 ```yaml
 apiVersion: numaflow.numaproj.io/v1alpha1
@@ -94,7 +122,7 @@ spec:
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-go/keran-test-nats-source:secret0.5.2
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.0
             volumeMounts:
               - name: my-config-mount
                 mountPath: /etc/config
@@ -113,9 +141,27 @@ spec:
     - from: p1
       to: out
 ```
+The Nats source is specified in the `in` vertex.
+The Nats source is a user-defined source, so we need to specify the user-defined source image.
+In this example, we use the Nats source image `quay.io/numaio/numaflow-source/nats-source:v0.5.0`.
+We also need to mount the ConfigMap that contains the Nats source configuration to the Nats source pod as a volume.
+In this example, we mount the ConfigMap to the Nats source pod as a volume named `my-config-mount`.
 
-### Step 4: Run the e2e test
-* Go to numaflow root folder, run:
-```bash
-make TestNatsSource
+Note: The Nats source requires the Nats authentication token to connect to the Nats server.
+Hence, we also need to mount the secret that contains the authentication token to the Nats source pod as a volume.
+In this example, we mount the secret to the Nats source pod as a volume named `my-secret-mount`.
+The following template was used to create the secret:
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nats-auth-fake-token
+stringData:
+  fake-token: "testingtoken"
 ```
+
+### Step 4: Run the pipeline
+With the steps above, we have created a running Nats server, specified the Nats source configuration in a ConfigMap,
+and specified the Nats source in the pipeline template.
+
+Now we can run the pipeline and start reading messages from the Nats server.
