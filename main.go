@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -11,6 +10,7 @@ import (
 
 	"numaflow-nats-source/pkg/config"
 	"numaflow-nats-source/pkg/nats"
+	"numaflow-nats-source/pkg/utils"
 )
 
 func main() {
@@ -34,6 +34,7 @@ func main() {
 		log.Panic("Failed to create nats source : ", err)
 	}
 	defer natsSrc.Close()
+
 	err = sourcer.NewServer(natsSrc).Start(context.Background())
 	if err != nil {
 		log.Panic("Failed to start source server : ", err)
@@ -43,14 +44,14 @@ func main() {
 func getConfigFromFile(format string) (*config.Config, error) {
 	if format == "yaml" {
 		parser := &config.YAMLConfigParser{}
-		content, err := ioutil.ReadFile("/etc/config/nats-config.yaml")
+		content, err := os.ReadFile(fmt.Sprintf("%s/nats-config.yaml", utils.ConfigVolumePath))
 		if err != nil {
 			return nil, err
 		}
 		return parser.Parse(string(content))
 	} else if format == "json" {
 		parser := &config.JSONConfigParser{}
-		content, err := ioutil.ReadFile("/etc/config/nats-config.json")
+		content, err := os.ReadFile(fmt.Sprintf("%s/nats-config.json", utils.ConfigVolumePath))
 		if err != nil {
 			return nil, err
 		}

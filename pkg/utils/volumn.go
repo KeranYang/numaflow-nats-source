@@ -8,10 +8,24 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+type VolumeReader interface {
+	GetSecretFromVolume(selector *corev1.SecretKeySelector) (string, error)
+	GetSecretVolumePath(selector *corev1.SecretKeySelector) (string, error)
+}
+
+type NatsVolumeReader struct {
+	secretPath string
+}
+
+func NewNatsVolumeReader(secretPath string) *NatsVolumeReader {
+	return &NatsVolumeReader{
+		secretPath: secretPath,
+	}
+}
+
 // GetSecretFromVolume retrieves the value of mounted secret volume
-// "/etc/secrets/${secretRef.name}/${secretRef.key}" is expected to be the file path
-func GetSecretFromVolume(selector *corev1.SecretKeySelector) (string, error) {
-	filePath, err := GetSecretVolumePath(selector)
+func (nvr *NatsVolumeReader) GetSecretFromVolume(selector *corev1.SecretKeySelector) (string, error) {
+	filePath, err := nvr.GetSecretVolumePath(selector)
 	if err != nil {
 		return "", err
 	}
@@ -25,9 +39,9 @@ func GetSecretFromVolume(selector *corev1.SecretKeySelector) (string, error) {
 }
 
 // GetSecretVolumePath returns the path of the mounted secret
-func GetSecretVolumePath(selector *corev1.SecretKeySelector) (string, error) {
+func (nvr *NatsVolumeReader) GetSecretVolumePath(selector *corev1.SecretKeySelector) (string, error) {
 	if selector == nil {
 		return "", fmt.Errorf("secret key selector is nil")
 	}
-	return fmt.Sprintf("/etc/secrets/%s/%s", selector.Name, selector.Key), nil
+	return fmt.Sprintf("%s/%s/%s", nvr.secretPath, selector.Name, selector.Key), nil
 }

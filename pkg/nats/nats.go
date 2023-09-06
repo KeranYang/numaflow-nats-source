@@ -27,6 +27,8 @@ type natsSource struct {
 	bufferSize int
 	messages   chan *Message
 
+	volumeReader utils.VolumeReader
+
 	logger *zap.Logger
 }
 
@@ -55,6 +57,7 @@ func New(c *config.Config, opts ...Option) (*natsSource, error) {
 	}
 
 	n.messages = make(chan *Message, n.bufferSize)
+	n.volumeReader = utils.NewNatsVolumeReader(utils.SecretVolumePath)
 
 	opt := []natslib.Option{
 		natslib.MaxReconnects(-1),
@@ -68,7 +71,7 @@ func New(c *config.Config, opts ...Option) (*natsSource, error) {
 	}
 
 	if c.TLS != nil {
-		if c, err := utils.GetTLSConfig(c.TLS); err != nil {
+		if c, err := utils.GetTLSConfig(c.TLS, n.volumeReader); err != nil {
 			return nil, err
 		} else {
 			opt = append(opt, natslib.Secure(c))
@@ -78,23 +81,23 @@ func New(c *config.Config, opts ...Option) (*natsSource, error) {
 	if c.Auth != nil {
 		switch {
 		case c.Auth.Basic != nil && c.Auth.Basic.User != nil && c.Auth.Basic.Password != nil:
-			username, err := utils.GetSecretFromVolume(c.Auth.Basic.User)
+			username, err := n.volumeReader.GetSecretFromVolume(c.Auth.Basic.User)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get basic auth user, %w", err)
 			}
-			password, err := utils.GetSecretFromVolume(c.Auth.Basic.Password)
+			password, err := n.volumeReader.GetSecretFromVolume(c.Auth.Basic.Password)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get basic auth password, %w", err)
 			}
 			opt = append(opt, natslib.UserInfo(username, password))
 		case c.Auth.Token != nil:
-			token, err := utils.GetSecretFromVolume(c.Auth.Token)
+			token, err := n.volumeReader.GetSecretFromVolume(c.Auth.Token)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get auth token, %w", err)
 			}
 			opt = append(opt, natslib.Token(token))
 		case c.Auth.NKey != nil:
-			nKeyFile, err := utils.GetSecretVolumePath(c.Auth.NKey)
+			nKeyFile, err := n.volumeReader.GetSecretVolumePath(c.Auth.NKey)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get configured nkey file, %w", err)
 			}

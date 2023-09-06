@@ -119,7 +119,7 @@ spec:
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-source/nats-source:v0.5.1
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.2
             volumeMounts:
               - name: my-config-mount
                 mountPath: /etc/config
@@ -134,7 +134,7 @@ spec:
 ```
 The Nats source is specified in the `in` vertex.
 The Nats source is a user-defined source, so we need to specify the user-defined source image.
-In this example, we use the Nats source image `quay.io/numaio/numaflow-source/nats-source:v0.5.1`.
+In this example, we use the Nats source image `quay.io/numaio/numaflow-source/nats-source:v0.5.2`.
 We also need to mount the ConfigMap that contains the Nats source configuration to the Nats source pod as a volume.
 In this example, we mount the ConfigMap to the Nats source pod as a volume named `my-config-mount`.
 
@@ -187,7 +187,7 @@ The pipeline template remains the same except that we need to set the environmen
 source:
   udsource:
     container:
-      image: quay.io/numaio/numaflow-source/nats-source:v0.5.1
+      image: quay.io/numaio/numaflow-source/nats-source:v0.5.2
       env:
         - name: CONFIG_FORMAT
           value: json
