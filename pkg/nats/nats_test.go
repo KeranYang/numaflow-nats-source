@@ -30,6 +30,7 @@ func (rr TestReadRequest) TimeOut() time.Duration {
 	return rr.timeout
 }
 
+// Test_Single tests a single source reading from a single nats subject
 func Test_Single(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -67,6 +68,7 @@ func Test_Single(t *testing.T) {
 	assert.Equal(t, 3, len(messageCh))
 }
 
+// Test_Multiple tests multiple sources reading from a single nats subject
 func Test_Multiple(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()

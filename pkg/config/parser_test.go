@@ -1,6 +1,7 @@
 package config
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,4 +38,64 @@ func TestConfigParser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, testConfig, config)
 	}
+}
+
+func TestConfigParser_YAML(t *testing.T) {
+	yamlStr := `
+url: nats
+subject: test-subject
+queue: my-queue
+auth:
+  token:
+    localobjectreference:
+      name: nats-auth-fake-token
+    key: fake-token`
+	parser := &YAMLConfigParser{}
+	config, err := parser.Parse(yamlStr)
+	assert.NoError(t, err)
+	assert.True(t, reflect.DeepEqual(&Config{
+		URL:     "nats",
+		Subject: "test-subject",
+		Queue:   "my-queue",
+		Auth: &Auth{
+			Token: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "nats-auth-fake-token",
+				},
+				Key: "fake-token",
+			},
+		},
+	}, config))
+}
+
+func TestConfigParser_JSON(t *testing.T) {
+	jsonStr := `
+{
+  "url":"nats",
+  "subject":"test-subject",
+  "queue":"my-queue",
+  "auth":{
+    "token":{
+      "name":"nats-auth-fake-token",
+      "key":"fake-token"
+    }
+  }
+}
+`
+	parser := &JSONConfigParser{}
+	config, err := parser.Parse(jsonStr)
+	assert.NoError(t, err)
+	assert.True(t, reflect.DeepEqual(&Config{
+		URL:     "nats",
+		Subject: "test-subject",
+		Queue:   "my-queue",
+		Auth: &Auth{
+			Token: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: "nats-auth-fake-token",
+				},
+				Key: "fake-token",
+			},
+		},
+	}, config))
 }

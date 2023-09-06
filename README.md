@@ -7,7 +7,7 @@ The pipeline reads messages from a Nats server, and writes them to a log sink.
 
 ### Pre-requisites
 * Follow the [Numaflow quick start guide](https://numaflow.numaproj.io/docs/quickstart) to install Numaflow on your local kube cluster.
-* Follow [natscli](https://github.com/nats-io/natscli) to install THE Nats Command Line Interface (CLI) tool.
+* Follow [natscli](https://github.com/nats-io/natscli) to install The Nats Command Line Interface (CLI) tool.
 
 ### Step 1: Deploy a Nats server, and a Numaflow pipeline
 Under the current folder, run the following command
@@ -67,23 +67,20 @@ With a running Nats server, we need to specify how to connect to the Nats server
 We need a **Nats source configuration**.
 Numaflow Nats Source requires us to specify the Nats source configuration in a ConfigMap,
 and mount it to the Nats source pod as a volume.
-The following example demonstrates how to create a ConfigMap that contains the Nats source configuration in JSON format.
+The following example demonstrates how to create a ConfigMap that contains the Nats source configuration in YAML format.
 
 ```yaml
 apiVersion: v1
 data:
-  nats-config.json: |
-    {
-         "url":"nats",
-         "subject":"test-subject",
-         "queue":"my-queue",
-         "auth":{
-            "token":{
-               "name":"nats-auth-fake-token",
-               "key":"fake-token"
-            }
-         }
-      }
+  nats-config.yaml: |
+    url: nats
+    subject: test-subject
+    queue: my-queue
+    auth:
+      token:
+        localobjectreference:
+          name: nats-auth-fake-token
+        key: fake-token
 kind: ConfigMap
 metadata:
   name: nats-config-map
@@ -122,28 +119,22 @@ spec:
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-source/nats-source:v0.5.0
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.1
             volumeMounts:
               - name: my-config-mount
                 mountPath: /etc/config
               - name: my-secret-mount
                 mountPath: /etc/secrets/nats-auth-fake-token
-    - name: p1
-      udf:
-        builtin:
-          name: cat
     - name: out
       sink:
         log: {}
   edges:
     - from: in
-      to: p1
-    - from: p1
       to: out
 ```
 The Nats source is specified in the `in` vertex.
 The Nats source is a user-defined source, so we need to specify the user-defined source image.
-In this example, we use the Nats source image `quay.io/numaio/numaflow-source/nats-source:v0.5.0`.
+In this example, we use the Nats source image `quay.io/numaio/numaflow-source/nats-source:v0.5.1`.
 We also need to mount the ConfigMap that contains the Nats source configuration to the Nats source pod as a volume.
 In this example, we mount the ConfigMap to the Nats source pod as a volume named `my-config-mount`.
 
@@ -165,3 +156,41 @@ With the steps above, we have created a running Nats server, specified the Nats 
 and specified the Nats source in the pipeline template.
 
 Now we can run the pipeline and start reading messages from the Nats server.
+
+## Using JSON format to specify the Nats source configuration
+By default, Numaflow Nats Source uses YAML as configuration format.
+You can also specify the Nats source configuration in a ConfigMap in JSON format.
+You can tell the Nats source to read the Nats source configuration in YAML format by setting the environment variable `NATS_CONFIG_FORMAT` to `json`.
+The following example demonstrates how to specify the Nats source configuration in JSON format.
+
+```yaml
+apiVersion: v1
+data:
+  nats-config.json: |
+      {
+         "url":"nats",
+         "subject":"test-subject",
+         "queue":"my-queue",
+         "auth":{
+            "token":{
+               "name":"nats-auth-fake-token",
+               "key":"fake-token"
+            }
+         }
+      }
+kind: ConfigMap
+metadata:
+  name: nats-config-map
+```
+The pipeline template remains the same except that we need to set the environment variable `CONFIG_FORMAT` to `json`.
+```yaml
+source:
+  udsource:
+    container:
+      image: quay.io/numaio/numaflow-source/nats-source:v0.5.1
+      env:
+        - name: CONFIG_FORMAT
+          value: json
+      volumeMounts:
+        ...
+```
