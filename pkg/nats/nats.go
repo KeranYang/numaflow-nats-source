@@ -108,11 +108,13 @@ func New(c *config.Config, opts ...Option) (*natsSource, error) {
 
 	n.logger.Info("Connecting to nats service...")
 	if conn, err := natslib.Connect(c.URL, opt...); err != nil {
+		n.logger.Error("Failed to connect to nats server", zap.Error(err))
 		return nil, fmt.Errorf("failed to connect to nats server, %w", err)
 	} else {
 		n.natsConn = conn
 	}
 
+	n.logger.Info(fmt.Sprintf("Subscribing to subject %s with queue %s", c.Subject, c.Queue))
 	if sub, err := n.natsConn.QueueSubscribe(c.Subject, c.Queue, func(msg *natslib.Msg) {
 		readOffset := uuid.New().String()
 		m := &Message{
@@ -122,11 +124,13 @@ func New(c *config.Config, opts ...Option) (*natsSource, error) {
 		}
 		n.messages <- m
 	}); err != nil {
+		n.logger.Error("Failed to QueueSubscribe nats messages", zap.Error(err))
 		n.natsConn.Close()
 		return nil, fmt.Errorf("failed to QueueSubscribe nats messages, %w", err)
 	} else {
 		n.sub = sub
 	}
+	n.logger.Info("Nats source server started")
 	return n, nil
 }
 
@@ -159,7 +163,15 @@ func (n *natsSource) Read(_ context.Context, readRequest sourcesdk.ReadRequest, 
 
 // Ack acknowledges the data from the source.
 func (n *natsSource) Ack(_ context.Context, request sourcesdk.AckRequest) {
-	for _, offset := range request.Offsets() {
-		n.logger.Info(fmt.Sprintf("Acking offset %s", string(offset.Value())))
+	// Ack is a no-op for the Nats source.
+}
+
+func (n *natsSource) Close() error {
+	n.logger.Info("Shutting down nats source server...")
+	if err := n.sub.Unsubscribe(); err != nil {
+		n.logger.Error("Failed to unsubscribe nats subscription", zap.Error(err))
 	}
+	n.natsConn.Close()
+	n.logger.Info("Nats source server shutdown")
+	return nil
 }

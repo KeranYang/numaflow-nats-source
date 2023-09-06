@@ -23,6 +23,7 @@ func main() {
 	if err != nil {
 		log.Panic("Failed to create nats source : ", err)
 	}
+	defer natsSrc.Close()
 	err = sourcer.NewServer(natsSrc).Start(context.Background())
 	if err != nil {
 		log.Panic("Failed to start source server : ", err)
