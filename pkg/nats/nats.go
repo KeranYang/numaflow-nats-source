@@ -14,6 +14,10 @@ import (
 	"numaflow-nats-source/pkg/utils"
 )
 
+const (
+	defaultBufferSize = 1000
+)
+
 type Message struct {
 	payload    string
 	readOffset string
@@ -44,8 +48,7 @@ func WithLogger(l *zap.Logger) Option {
 
 func New(c *config.Config, opts ...Option) (*natsSource, error) {
 	n := &natsSource{
-		// TODO: make this configurable by the user
-		bufferSize: 1000, // default size
+		bufferSize: defaultBufferSize,
 	}
 	for _, o := range opts {
 		if err := o(n); err != nil {
@@ -53,7 +56,11 @@ func New(c *config.Config, opts ...Option) (*natsSource, error) {
 		}
 	}
 	if n.logger == nil {
-		n.logger, _ = zap.NewDevelopment()
+		var err error
+		n.logger, err = zap.NewDevelopment()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create logger, %w", err)
+		}
 	}
 
 	n.messages = make(chan *Message, n.bufferSize)

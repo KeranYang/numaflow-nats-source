@@ -2,13 +2,14 @@ package config
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 )
 
-func TestConfigParser(t *testing.T) {
+func TestConfigParser_UnParseThenParse(t *testing.T) {
 	var parsers = []Parser{
 		&JSONConfigParser{},
 		&YAMLConfigParser{},
@@ -40,6 +41,21 @@ func TestConfigParser(t *testing.T) {
 	}
 }
 
+func TestConfigParser_ParseErrScenarios(t *testing.T) {
+	var parsers = []Parser{
+		&JSONConfigParser{},
+		&YAMLConfigParser{},
+	}
+	for _, parser := range parsers {
+		_, err := parser.Parse("invalid config string")
+		assert.Error(t, err)
+		assert.True(t, strings.Contains(err.Error(), "failed to parse config string"))
+		_, err = parser.UnParse(nil)
+		assert.Error(t, err)
+		assert.True(t, strings.Contains(err.Error(), "config cannot be nil"))
+	}
+}
+
 func TestConfigParser_YAML(t *testing.T) {
 	yamlStr := `
 url: nats
@@ -49,7 +65,8 @@ auth:
   token:
     localobjectreference:
       name: nats-auth-fake-token
-    key: fake-token`
+    key: fake-token
+`
 	parser := &YAMLConfigParser{}
 	config, err := parser.Parse(yamlStr)
 	assert.NoError(t, err)
