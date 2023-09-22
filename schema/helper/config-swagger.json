@@ -1,0 +1,118 @@
+{
+  "swagger": "2.0",
+  "paths": {},
+  "definitions": {
+    "Auth": {
+      "type": "object",
+      "title": "Auth represents the authentication information for the Nats client.",
+      "properties": {
+        "basic": {
+          "$ref": "#/definitions/BasicAuth"
+        },
+        "nkey": {
+          "$ref": "#/definitions/SecretKeySelector"
+        },
+        "token": {
+          "$ref": "#/definitions/SecretKeySelector"
+        }
+      },
+      "x-go-package": "numaflow-nats-source/pkg/config"
+    },
+    "BasicAuth": {
+      "type": "object",
+      "title": "BasicAuth represents the basic authentication approach which contains a username and a password.",
+      "properties": {
+        "password": {
+          "$ref": "#/definitions/SecretKeySelector"
+        },
+        "user": {
+          "$ref": "#/definitions/SecretKeySelector"
+        }
+      },
+      "x-go-package": "numaflow-nats-source/pkg/config"
+    },
+    "Config": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "$ref": "#/definitions/Auth"
+        },
+        "queue": {
+          "description": "Queue is used for queue subscription.",
+          "type": "string",
+          "x-go-name": "Queue"
+        },
+        "subject": {
+          "description": "Subject holds the name of the subject onto which messages are published.",
+          "type": "string",
+          "x-go-name": "Subject"
+        },
+        "tls": {
+          "$ref": "#/definitions/TLS"
+        },
+        "url": {
+          "description": "URL to connect to Nats cluster, multiple urls could be separated by comma.",
+          "type": "string",
+          "x-go-name": "URL"
+        }
+      },
+      "x-go-package": "numaflow-nats-source/pkg/config"
+    },
+    "LocalObjectReference": {
+      "description": "LocalObjectReference contains enough information to let you locate the\nreferenced object inside the same namespace.\n+structType=atomic",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of the referent.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names\nTODO: Add other useful fields. apiVersion, kind, uid?\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        }
+      },
+      "x-go-package": "k8s.io/api/core/v1"
+    },
+    "SecretKeySelector": {
+      "description": "+structType=atomic",
+      "type": "object",
+      "title": "SecretKeySelector selects a key of a Secret.",
+      "properties": {
+        "key": {
+          "description": "The key of the secret to select from.  Must be a valid secret key.",
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "name": {
+          "description": "Name of the referent.\nMore info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names\nTODO: Add other useful fields. apiVersion, kind, uid?\n+optional",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "optional": {
+          "description": "Specify whether the Secret or its key must be defined\n+optional",
+          "type": "boolean",
+          "x-go-name": "Optional"
+        }
+      },
+      "x-go-package": "k8s.io/api/core/v1"
+    },
+    "TLS": {
+      "type": "object",
+      "title": "TLS defines the TLS configuration for the Nats client.",
+      "properties": {
+        "caCertSecret": {
+          "$ref": "#/definitions/SecretKeySelector"
+        },
+        "clientCertSecret": {
+          "$ref": "#/definitions/SecretKeySelector"
+        },
+        "clientKeySecret": {
+          "$ref": "#/definitions/SecretKeySelector"
+        },
+        "insecureSkipVerify": {
+          "description": "+optional",
+          "type": "boolean",
+          "x-go-name": "InsecureSkipVerify"
+        }
+      },
+      "x-go-package": "numaflow-nats-source/pkg/config"
+    }
+  }
+}

@@ -9,6 +9,7 @@ The configuration includes the URL to connect to NATS cluster, the subject onto 
 the queue for queue subscription, the TLS configuration for the Nats client and the authentication information.
 */
 
+// swagger:model
 // Config represents the configuration for the Nats client.
 type Config struct {
 	// URL to connect to Nats cluster, multiple urls could be separated by comma.

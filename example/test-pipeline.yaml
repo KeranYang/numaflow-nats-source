@@ -24,6 +24,8 @@ spec:
               - name: my-secret-mount
                 mountPath: /etc/secrets/nats-auth-fake-token
     - name: out
+      scale:
+        min: 1
       sink:
         log: {}
   edges:

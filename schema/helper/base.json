@@ -1,0 +1,8 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "NATS Configuration Data Model",
+    "description": "This is a schema representing the NATS configuration data model.",
+    "version": "1.0.0"
+  }
+}
