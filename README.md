@@ -128,7 +128,7 @@ spec:
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-source/nats-source:v0.5.2
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.3
             volumeMounts:
               - name: my-config-mount
                 mountPath: /etc/config
@@ -189,7 +189,7 @@ Adjust your pipeline template to facilitate JSON configuration as shown below:
 source:
   udsource:
     container:
-      image: quay.io/numaio/numaflow-source/nats-source:v0.5.2
+      image: quay.io/numaio/numaflow-source/nats-source:v0.5.3
       env:
         - name: CONFIG_FORMAT
           value: json

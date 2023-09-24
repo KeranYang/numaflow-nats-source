@@ -8,19 +8,25 @@ spec:
       scale:
         min: 2
       volumes:
-        - name: my-config-mount
-          configMap:
-            name: nats-config-map
         - name: my-secret-mount
           secret:
             secretName: nats-auth-fake-token
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-source/nats-source:v0.5.2
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.3
+            env:
+              - name: NATS_CONFIG
+                value: |
+                  url: nats
+                  subject: test-subject
+                  queue: my-queue
+                  auth:
+                    token:
+                      localobjectreference:
+                        name: nats-auth-fake-token
+                      key: fake-token
             volumeMounts:
-              - name: my-config-mount
-                mountPath: /etc/config
               - name: my-secret-mount
                 mountPath: /etc/secrets/nats-auth-fake-token
     - name: out
