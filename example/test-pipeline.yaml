@@ -14,7 +14,7 @@ spec:
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-source/nats-source:v0.5.3
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.4
             env:
               - name: NATS_CONFIG
                 value: |

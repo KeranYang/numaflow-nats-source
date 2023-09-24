@@ -41,7 +41,7 @@ func Test_Single(t *testing.T) {
 	testSubject := "test-single"
 	testQueue := "test-queue-single"
 
-	config := &config.Config{
+	config := &config.NatsConfig{
 		URL:     url,
 		Subject: testSubject,
 		Queue:   testQueue,
@@ -79,7 +79,7 @@ func Test_Multiple(t *testing.T) {
 	testSubject := "test-single"
 	testQueue := "test-queue-single"
 
-	config := &config.Config{
+	config := &config.NatsConfig{
 		URL:     url,
 		Subject: testSubject,
 		Queue:   testQueue,

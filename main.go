@@ -22,12 +22,11 @@ func main() {
 		format = "yaml"
 	}
 
-	var config *config.Config
+	var config *config.NatsConfig
 	var err error
 
 	config, err = getConfigFromEnvVars(format)
 	if err != nil {
-		log.Panic("Failed to parse config from env vars : ", err)
 		config, err = getConfigFromFile(format)
 		if err != nil {
 			log.Panic("Failed to parse config file : ", err)
@@ -50,7 +49,7 @@ func main() {
 	}
 }
 
-func getConfigFromFile(format string) (*config.Config, error) {
+func getConfigFromFile(format string) (*config.NatsConfig, error) {
 	if format == "yaml" {
 		parser := &config.YAMLConfigParser{}
 		content, err := os.ReadFile(fmt.Sprintf("%s/nats-config.yaml", utils.ConfigVolumePath))
@@ -70,7 +69,7 @@ func getConfigFromFile(format string) (*config.Config, error) {
 	}
 }
 
-func getConfigFromEnvVars(format string) (*config.Config, error) {
+func getConfigFromEnvVars(format string) (*config.NatsConfig, error) {
 	var c string
 	c, ok := os.LookupEnv("NATS_CONFIG")
 	if !ok {

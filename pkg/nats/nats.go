@@ -46,7 +46,7 @@ func WithLogger(l *zap.Logger) Option {
 	}
 }
 
-func New(c *config.Config, opts ...Option) (*natsSource, error) {
+func New(c *config.NatsConfig, opts ...Option) (*natsSource, error) {
 	n := &natsSource{
 		bufferSize: defaultBufferSize,
 	}

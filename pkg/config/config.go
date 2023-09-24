@@ -1,16 +1,14 @@
 package config
 
-import (
-	corev1 "k8s.io/api/core/v1"
-)
+import corev1 "k8s.io/api/core/v1"
 
 /* Package config defines the configuration for the Nats user-defined source.
 The configuration includes the URL to connect to NATS cluster, the subject onto which messages are published,
 the queue for queue subscription, the TLS configuration for the Nats client and the authentication information.
 */
 
-// Config represents the configuration for the Nats client.
-type Config struct {
+// NatsConfig represents the configuration for the Nats client.
+type NatsConfig struct {
 	// URL to connect to Nats cluster, multiple urls could be separated by comma.
 	URL string `json:"url" protobuf:"bytes,1,opt,name=url"`
 	// Subject holds the name of the subject onto which messages are published.
@@ -19,14 +17,14 @@ type Config struct {
 	Queue string `json:"queue" protobuf:"bytes,3,opt,name=queue"`
 	// TLS configuration for the Nats client.
 	// +optional
-	TLS *TLS `json:"tls" protobuf:"bytes,4,opt,name=tls"`
+	TLS *NatsTLS `json:"tls" protobuf:"bytes,4,opt,name=tls"`
 	// Auth information
 	// +optional
-	Auth *Auth `json:"auth,omitempty" protobuf:"bytes,5,opt,name=auth"`
+	Auth *UDNatsAuth `json:"auth,omitempty" protobuf:"bytes,5,opt,name=auth"`
 }
 
-// TLS defines the TLS configuration for the Nats client.
-type TLS struct {
+// NatsTLS defines the TLS configuration for the Nats client.
+type NatsTLS struct {
 	// +optional
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty" protobuf:"bytes,1,opt,name=insecureSkipVerify"`
 	// CACertSecret refers to the secret that contains the CA cert
@@ -40,8 +38,8 @@ type TLS struct {
 	KeySecret *corev1.SecretKeySelector `json:"clientKeySecret,omitempty" protobuf:"bytes,4,opt,name=keySecret"`
 }
 
-// BasicAuth represents the basic authentication approach which contains a username and a password.
-type BasicAuth struct {
+// NatsBasicAuth represents the basic authentication approach which contains a username and a password.
+type NatsBasicAuth struct {
 	// Secret for auth user
 	// +optional
 	User *corev1.SecretKeySelector `json:"user,omitempty" protobuf:"bytes,1,opt,name=user"`
@@ -50,11 +48,11 @@ type BasicAuth struct {
 	Password *corev1.SecretKeySelector `json:"password,omitempty" protobuf:"bytes,2,opt,name=password"`
 }
 
-// Auth represents the authentication information for the Nats client.
-type Auth struct {
+// UDNatsAuth represents the authentication information for the Nats client.
+type UDNatsAuth struct {
 	// Basic auth, which contains a username and a password,
 	// +optional
-	Basic *BasicAuth `json:"basic,omitempty" protobuf:"bytes,1,opt,name=basic"`
+	Basic *NatsBasicAuth `json:"basic,omitempty" protobuf:"bytes,1,opt,name=basic"`
 	// Token auth
 	// +optional
 	Token *corev1.SecretKeySelector `json:"token,omitempty" protobuf:"bytes,2,opt,name=token"`

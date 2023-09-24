@@ -12,7 +12,7 @@ import (
 // TODO - unit test the following function
 
 // GetTLSConfig is a utility function to translate a nats tls config to tls.Config
-func GetTLSConfig(config *config.TLS, reader VolumeReader) (*tls.Config, error) {
+func GetTLSConfig(config *config.NatsTLS, reader VolumeReader) (*tls.Config, error) {
 	if config == nil {
 		return nil, nil
 	}
