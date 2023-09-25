@@ -11,7 +11,7 @@ This quick start guide will help you to set up and run a Nats source in a Numafl
 
 ### Prerequisites
 * [Install Numaflow on your local kube cluster](https://numaflow.numaproj.io/quick-start/)
-* [Install The Nats CLI tool](https://github.com/nats-io/natscli)
+* [Install NATS CLI tool](https://github.com/nats-io/natscli)
 
 ### Step-by-step Guide
 
@@ -128,7 +128,7 @@ spec:
       source:
         udsource:
           container:
-            image: quay.io/numaio/numaflow-source/nats-source:v0.5.2
+            image: quay.io/numaio/numaflow-source/nats-source:v0.5.4
             volumeMounts:
               - name: my-config-mount
                 mountPath: /etc/config
@@ -189,7 +189,7 @@ Adjust your pipeline template to facilitate JSON configuration as shown below:
 source:
   udsource:
     container:
-      image: quay.io/numaio/numaflow-source/nats-source:v0.5.2
+      image: quay.io/numaio/numaflow-source/nats-source:v0.5.4
       env:
         - name: CONFIG_FORMAT
           value: json

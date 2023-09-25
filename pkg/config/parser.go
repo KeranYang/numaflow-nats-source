@@ -10,15 +10,15 @@ import (
 
 // Parser is an interface that defines methods to parse and un-parse Config objects.
 type Parser interface {
-	Parse(configString string) (*Config, error)
-	UnParse(config *Config) (string, error)
+	Parse(configString string) (*NatsConfig, error)
+	UnParse(config *NatsConfig) (string, error)
 }
 
 // YAMLConfigParser is a parser for YAML formatted configuration strings
 type YAMLConfigParser struct{}
 
-func (p *YAMLConfigParser) Parse(configString string) (*Config, error) {
-	c := &Config{}
+func (p *YAMLConfigParser) Parse(configString string) (*NatsConfig, error) {
+	c := &NatsConfig{}
 	err := yaml.Unmarshal([]byte(configString), c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config string: %w", err)
@@ -26,7 +26,7 @@ func (p *YAMLConfigParser) Parse(configString string) (*Config, error) {
 	return c, nil
 }
 
-func (p *YAMLConfigParser) UnParse(config *Config) (string, error) {
+func (p *YAMLConfigParser) UnParse(config *NatsConfig) (string, error) {
 	if config == nil {
 		return "", errors.New("config cannot be nil")
 	}
@@ -40,8 +40,8 @@ func (p *YAMLConfigParser) UnParse(config *Config) (string, error) {
 // JSONConfigParser is a parser for JSON formatted configuration strings.
 type JSONConfigParser struct{}
 
-func (p *JSONConfigParser) Parse(configString string) (*Config, error) {
-	c := &Config{}
+func (p *JSONConfigParser) Parse(configString string) (*NatsConfig, error) {
+	c := &NatsConfig{}
 	err := json.Unmarshal([]byte(configString), c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config string: %w", err)
@@ -49,7 +49,7 @@ func (p *JSONConfigParser) Parse(configString string) (*Config, error) {
 	return c, nil
 }
 
-func (p *JSONConfigParser) UnParse(config *Config) (string, error) {
+func (p *JSONConfigParser) UnParse(config *NatsConfig) (string, error) {
 	if config == nil {
 		return "", errors.New("config cannot be nil")
 	}

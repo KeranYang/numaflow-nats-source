@@ -22,11 +22,19 @@ func main() {
 		format = "yaml"
 	}
 
-	config, err := getConfigFromFile(format)
+	var config *config.NatsConfig
+	var err error
+
+	config, err = getConfigFromEnvVars(format)
 	if err != nil {
-		log.Panic("Failed to parse config file : ", err)
+		config, err = getConfigFromFile(format)
+		if err != nil {
+			log.Panic("Failed to parse config file : ", err)
+		} else {
+			log.Printf("Successfully parsed config file")
+		}
 	} else {
-		log.Printf("Successfully parsed config file")
+		log.Printf("Successfully parsed config from env vars")
 	}
 
 	natsSrc, err := nats.New(config)
@@ -41,7 +49,7 @@ func main() {
 	}
 }
 
-func getConfigFromFile(format string) (*config.Config, error) {
+func getConfigFromFile(format string) (*config.NatsConfig, error) {
 	if format == "yaml" {
 		parser := &config.YAMLConfigParser{}
 		content, err := os.ReadFile(fmt.Sprintf("%s/nats-config.yaml", utils.ConfigVolumePath))
@@ -56,6 +64,23 @@ func getConfigFromFile(format string) (*config.Config, error) {
 			return nil, err
 		}
 		return parser.Parse(string(content))
+	} else {
+		return nil, fmt.Errorf("invalid config format %s", format)
+	}
+}
+
+func getConfigFromEnvVars(format string) (*config.NatsConfig, error) {
+	var c string
+	c, ok := os.LookupEnv("NATS_CONFIG")
+	if !ok {
+		return nil, fmt.Errorf("NATS_CONFIG environment variable is not set")
+	}
+	if format == "yaml" {
+		parser := &config.YAMLConfigParser{}
+		return parser.Parse(c)
+	} else if format == "json" {
+		parser := &config.JSONConfigParser{}
+		return parser.Parse(c)
 	} else {
 		return nil, fmt.Errorf("invalid config format %s", format)
 	}
